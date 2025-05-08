@@ -296,7 +296,58 @@ const getEmployeeById = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+// Update user details
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role, department, position, mobileNumber } = req.body;
 
+    // Check if user exists
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prevent changing own role if admin/hr
+    if (
+      (req.user.id === id) && 
+      (req.body.role && req.body.role !== user.role)
+    ) {
+      return res.status(400).json({ 
+        message: "You cannot change your own role" 
+      });
+    }
+
+    // Update user
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.role = role || user.role;
+    user.department = department || user.department;
+    user.position = position || user.position;
+    user.mobileNumber = mobileNumber || user.mobileNumber;
+
+    await user.save();
+
+    res.json({
+      message: "User updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        position: user.position,
+        mobileNumber: user.mobileNumber
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+    res.status(500).json({ message: "Server error" });
+  }
+};
 module.exports = {
   registerUser,
   loginUser,
@@ -307,4 +358,5 @@ module.exports = {
   getEmployeeProfile,
   deleteUser,
   getEmployeeById,
+  updateUser
 };

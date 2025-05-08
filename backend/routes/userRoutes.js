@@ -9,6 +9,7 @@ const {
   getEmployeeProfile,
   deleteUser,
   getEmployeeById,
+  updateUser
 } = require("../controllers/userController");
 const { protect, admin } = require("../middleware/authMiddleware");
 
@@ -26,5 +27,5 @@ router.get("/employee/stats", protect, getEmployeeStats);
 router.get("/employee/profile", protect, getEmployeeProfile);
 router.delete("/users/:id", protect, admin, deleteUser);
 router.get("/users/:id", protect, admin, getEmployeeById);
-
+router.put("/users/:id", protect, admin, updateUser);
 module.exports = router;

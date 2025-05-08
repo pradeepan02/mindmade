@@ -51,8 +51,70 @@ const HrHome = () => {
     email: "",
     _id: "",
   });
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    email: "",
+    role: "",
+    department: "",
+    position: "",
+    mobileNumber: "",
+  });
   const navigate = useNavigate();
+  const handleEditClick = (employee) => {
+    setCurrentEmployee(employee);
+    setEditFormData({
+      name: employee.name,
+      email: employee.email,
+      role: employee.role,
+      department: employee.department,
+      position: employee.position,
+      mobileNumber: employee.mobileNumber,
+    });
+    setEditModalOpen(true);
+  };
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: value,
+    });
+  };
+  // Add this function to handle form submission
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        `http://localhost:5000/api/auth/users/${currentEmployee._id}`,
+        editFormData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
+      // Update the employee data in state
+      setRecentEmployees(
+        recentEmployees.map((emp) =>
+          emp._id === currentEmployee._id ? { ...emp, ...editFormData } : emp
+        )
+      );
+
+      setEditModalOpen(false);
+      setSuccess("Employee details updated successfully");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      console.error("Update error:", err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to update employee"
+      );
+    }
+  };
   const fetchHrProfile = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -953,11 +1015,10 @@ const HrHome = () => {
                                     <Eye size={18} />
                                   </button>
                                   <button
-                                    onClick={() =>
-                                      navigate(
-                                        `/employees/${employee._id}/edit`
-                                      )
-                                    }
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleEditClick(employee);
+                                    }}
                                     className="p-1 text-yellow-600 hover:bg-yellow-50 rounded"
                                     title="Edit Employee"
                                   >
@@ -993,7 +1054,6 @@ const HrHome = () => {
               </div>
             </div>
           )}
-
           {activeTab === "leaves" && (
             <div>
               <div className="bg-white rounded-xl shadow-md mb-6">
@@ -1357,6 +1417,98 @@ const HrHome = () => {
           )}
         </main>
       </div>
+      {editModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Edit Employee Details</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleEditFormChange}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={editFormData.email}
+                  onChange={handleEditFormChange}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Role</label>
+                <select
+                  name="role"
+                  value={editFormData.role}
+                  onChange={handleEditFormChange}
+                  className="w-full px-3 py-2 border rounded-lg"
+                 // Prevent changing own role
+                >
+                  <option value="employee">Employee</option>
+                  <option value="hr">HR</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Department</label>
+                <input
+                  type="text"
+                  name="department"
+                  value={editFormData.department}
+                  onChange={handleEditFormChange}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Position</label>
+                <input
+                  type="text"
+                  name="position"
+                  value={editFormData.position}
+                  onChange={handleEditFormChange}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">
+                  Mobile Number
+                </label>
+                <input
+                  type="text"
+                  name="mobileNumber"
+                  value={editFormData.mobileNumber}
+                  onChange={handleEditFormChange}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
